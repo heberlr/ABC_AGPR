@@ -1,40 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pickle
+import sys
+sys.path.append('../src')
 from ABC import ABC_SMC,ABC_MCMC
 from AGPR import AdapGP
-import pickle
-
 
 def Reta(Par):
   x = np.arange(0,1,0.01)
   return Par[0]*x + Par[1]
   
-def RetaGPR(Par):
+def RetaAGPR(Par):
   ParLocal = np.reshape(Par, (1, Par.size))
   with open('model.pkl', 'rb') as f:
     gpr = pickle.load(f)
   OUT = gpr.predict(ParLocal, return_std=True) 
   return OUT[0].ravel()
 
-
-def ExampleReta():
-  # Observational data
-  x = np.arange(0,1,0.01)
-  fx = 1.0*x + 0.5
-  # Boundary of parameter space
-  UpperLimit = np.array([1.5,1.0])
-  LowLimit = np.array([0.5,0.0])
-  # Tolerance vector
-  epsilon = np.array([1.0,0.5,0.1])
-  # Calling the method SMC
-  outSMC = ABC_SMC(Reta, fx, LowLimit, UpperLimit,'CalibSMC.dat',epsilon, 100)
-  PlotPosterior(outSMC,([1,2]))
-  # Calling the method MCMC
-  outMCMC = ABC_MCMC(Reta, fx, LowLimit, UpperLimit,'CalibMCMC.dat',epsilon[-1], 100)
-  PlotPosterior(outMCMC,([1,2]))
-
-def ExampleReta():
+def CalibReta():
   # Observational data
   x = np.arange(0,1,0.01)
   fx = 1.0*x + 0.5 # The exact parameter is theta = ( 1.0 , 0.5 ) 
@@ -50,10 +34,10 @@ def ExampleReta():
   outMCMC = ABC_MCMC(Reta, fx, LowLimit, UpperLimit,'CalibMCMC.dat',epsilon[-1], 100)
   PlotPosterior(outMCMC,([1,2]))
   # Calling the method SMC-AGPR
-  outSMC = ABC_SMC(RetaGPR, fx, LowLimit, UpperLimit,'CalibSMC.dat',epsilon, 100)
+  outSMC = ABC_SMC(RetaAGPR, fx, LowLimit, UpperLimit,'CalibSMC.dat',epsilon, 100)
   PlotPosterior(outSMC,([1,2]))
   # Calling the method MCMC-AGPR
-  outMCMC = ABC_MCMC(RetaGPR, fx, LowLimit, UpperLimit,'CalibMCMC.dat',epsilon[-1], 100)
+  outMCMC = ABC_MCMC(RetaAGPR, fx, LowLimit, UpperLimit,'CalibMCMC.dat',epsilon[-1], 100)
   PlotPosterior(outMCMC,([1,2]))
   
   # Testing prediction of GPR
@@ -90,7 +74,7 @@ def Model(Par):
   dead = np.array(input[:,3])
   return np.concatenate((live,dead),axis=None)
 
-
+x = np.arange(0,1,0.01)
 # Boundary of parameter space
 UpperLimit = np.array([1.5,1.0])
 LowLimit = np.array([0.5,0.0])
@@ -99,5 +83,5 @@ LowLimit = np.array([0.5,0.0])
 #AdapGP(Reta,50, LowLimit, UpperLimit, x.shape[0], tol = 1.0)
 
 # Running Reta example
-ExampleReta()
+CalibReta()
 

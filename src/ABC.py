@@ -131,7 +131,6 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
             else:
               for j in range(0, NumAccept): Kernel[j] = np.linalg.norm(multivariate_normal.pdf(theta_ant[j,:], mean=theta_star, cov=var_trasition))
               weight[count] = 1.0/np.sum(weight_prev*Kernel)
-              weight[np.isnan(weight)] = 0.0
             # Add sample to population
             theta_ant[count,:] = theta_star
             count = count + 1
@@ -139,6 +138,7 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
             break
     # Normalize weights 
     weight /= np.sum(weight)
+    weight[np.isnan(weight)] = 0.0
     weight[-1] += np.abs(1.0-np.sum(weight))
     weight_prev = np.copy(weight)
 
