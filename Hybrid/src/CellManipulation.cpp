@@ -1,8 +1,10 @@
 #include "CellManipulation.hpp"
 
+static double pi=3.1415926535897932384626433832795;
+
 Cell CellManipulation::divide(Cell *cell, double rand1, double rand2){
-    double  teta = 2*M_PI*rand1,
-    phi = M_PI*rand2,
+    double  teta = 2*pi*rand1,
+    phi = pi*rand2,
     radiusNucleus = cell->nucleusRadius/pow(2,(1/3.0));
     Vector3 pos = cell->coordinates, dist(radiusNucleus*sin(phi)*cos(teta), radiusNucleus*sin(phi)*sin(teta), radiusNucleus*cos(phi));
 
@@ -393,7 +395,7 @@ void CellManipulation2D::force(Frame *frame, ConfigHandler *config){
 }
 
 Cell CellManipulation2D::divide(Cell *cell, double rand1){
-    double  teta = 2*M_PI*rand1,
+    double  teta = 2*pi*rand1,
     radiusNucleus = cell->nucleusRadius/sqrt(2);
     Vector3 pos = cell->coordinates, dist(radiusNucleus*cos(teta), radiusNucleus*sin(teta), 0.0);
 

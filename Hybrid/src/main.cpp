@@ -20,26 +20,26 @@
 
 int main (int argc, char *argv[]){
 	// std::ios::sync_with_stdio(false);
-	ConfigHandler config("ABM_config-2D.cfg");
+	ConfigHandler config;
 
 	if (!config.created())
 		return EXIT_FAILURE;
-
+    
 	//One execution
 	// Ran ran(config.input.seed);
 	//
 
 	//Replica
-	Ran ran(time(NULL));
-  config.output.filenames.number = atoi(argv[1]);
+	Ran ran(time(NULL)+atoi(argv[1]));
+    config.output.filenames.number = atoi(argv[1]);
 	//
 
 	Frame* frame;
 	Mesh* mesh;
 	Macro* macro;
 
-	config.parameters.alphaP = atof(argv[3]);
-	config.parameters.alphaA = atof(argv[4]);
+	config.parameters.alphaP = atof(argv[2]);
+	config.parameters.alphaA = atof(argv[3]);
 
 	//printf("Par: %lf, %lf, %lf, %lf, %lf",config.parameters.alphaP,config.parameters.alphaA,config.agent.oConsumption,config.continuum.oxgD,config.parameters.sigmaH);
 
@@ -67,7 +67,7 @@ int main (int argc, char *argv[]){
 	macro->diference();
 
 	//Confluence
-	char name[60];
+/* 	char name[60];
 	char path[60];
 	sprintf(path,"confluence/confluence%03d/", atoi(argv[2]));
 	struct stat info;
@@ -78,7 +78,8 @@ int main (int argc, char *argv[]){
 	}
   sprintf(name,"%s%s%03d-confluence-2D.dat", path,config.output.filenames.agent.c_str(), config.output.filenames.number);
   FILE *arq = fopen(name, "w");
-  fprintf(arq, "%05d %e %e\n", frame->time ,macro->LiveConfluence, macro->DeadConfluence);
+  fprintf(arq, "%05d %e %e\n", frame->time ,macro->LiveConfluence, macro->DeadConfluence); */
+    printf("%.1lf %e %e\n", float(frame->time) ,macro->LiveConfluence, macro->DeadConfluence);
 
 	while(frame->time < config.input.timeMax){
 		frame->time += config.parameters.delta_tt;
@@ -105,11 +106,13 @@ int main (int argc, char *argv[]){
 
 		macro->reaction();
 		macro->diference();
-		if (frame->time % 3 == 0)
-			fprintf(arq, "%05d %e %e\n", frame->time, macro->LiveConfluence, macro->DeadConfluence);
+		if (frame->time % 3 == 0){
+			//fprintf(arq, "%05d %e %e\n", frame->time, macro->LiveConfluence, macro->DeadConfluence);
+            printf("%.1lf %e %e\n", float(frame->time) ,macro->LiveConfluence, macro->DeadConfluence);
+        }
 
 	}
-	fclose(arq);
+	// fclose(arq);
 	//Desalocar memória
 	delete frame;
 	delete mesh;

@@ -8,7 +8,7 @@ OBJ_FILES := $(addprefix $(BUILD_FOLDER),$(notdir $(CPP_FILES:.cpp=.o)))
 
 LIBCONFIG = -lconfig++
 OPENMP = -fopenmp
-LIBS = $(LIBCONFIG) $(OPENMP)
+LIBS = $(OPENMP)
 
 $(PROG):$(OBJ_FILES)
 	$(CXX) $(CXXFLAGS) -o $(PROG) $^ $(LIBS)

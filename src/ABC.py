@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100, NumAccept = 1000, max_iterations=100000, var_trasition=0.2):
+def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100, NumAccept = 100, max_iterations=100000, var_trasition=0.2):
   #*****************************************************************************
   #
   ## Markov chain Monte Carlo without likelihoods - Bayesian inference
@@ -8,7 +8,7 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100,
   #
   #  Modified:
   #
-  #  16 May 2020
+  #  7 May 2020
   #
   #  Author:
   #
@@ -64,7 +64,7 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100,
   return theta
 
 
-def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,99,100]), NumAccept = 1000, max_iterations=100000, var_trasition=0.2):
+def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,99,100]), NumAccept = 100, max_iterations=100000, var_trasition=0.2):
   #*****************************************************************************
   #
   ## Approximate  Bayesian Computation - Sequential Monte Carlo - Bayesian inference

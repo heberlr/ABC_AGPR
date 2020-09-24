@@ -4,151 +4,146 @@
 #include <iomanip>
 #include <cstdlib>
 #include <iostream>
-#include <libconfig.h++>
+//#include <libconfig.h++>
 #include <string>
 #include "Util.hpp"
 
-using namespace libconfig;
+//using namespace libconfig;
 
 class ConfigHandler
 {
 private:
-    Config cfg;
-    bool created_;
+    //Config cfg;
+    bool created_ = true;
 
     void getInputValues()
-    {
-        const Setting& conf = this->cfg.getRoot()["agents"]["input"];
+    { 
+        /* const Setting& conf = this->cfg.getRoot()["agents"]["input"];
 
         try
-        {
-            conf.lookupValue("seed", this->input.seed);
-            conf.lookupValue("time-max", this->input.timeMax);
-            conf.lookupValue("initial-condition", this->input.initialCondition);
-            std::string fileFormat;
-            conf.lookupValue("file-format", fileFormat);
-            if (fileFormat == "2d" || fileFormat == "2D") {
-                this->input.fileFormat = BI_D;
-            } else if (fileFormat == "3d" || fileFormat == "3D") {
-                this->input.fileFormat = TRI_D;
-            }
-        }
+        { */
+            this->input.seed = 7;
+            this->input.timeMax = 96;
+            this->input.initialCondition = "input/ABM_INPUT.dat";
+            this->input.fileFormat = BI_D; //2D
+            //this->input.fileFormat = TRI_D; //3D
+        /* }
         catch(const SettingNotFoundException &nfex)
         {
             this->created_ = false;
             std::cerr << "Input Settings Not Found!" << std::endl;
-        }
+        } */
     }
 
     void getOutputValues()
     {
-        const Setting& conf = this->cfg.getRoot()["agents"]["output"];
+        /* const Setting& conf = this->cfg.getRoot()["agents"]["output"];
 
         try
-        {
-            conf["paths"].lookupValue("agent", this->output.paths.agent);
-            conf["paths"].lookupValue("nut", this->output.paths.nut);
-            conf["filenames"].lookupValue("number", this->output.filenames.number);
-            conf["filenames"].lookupValue("agent", this->output.filenames.agent);
-            conf["filenames"].lookupValue("nut", this->output.filenames.nut);
-            conf.lookupValue("nut", this->output.nut);
-            conf.lookupValue("files", this->output.files);
-            conf.lookupValue("prints", this->output.prints);
+        { */
+            this->output.paths.agent = "output/";
+            this->output.paths.nut = "output/nut/";
+            this->output.filenames.number = 1;
+            this->output.filenames.agent = "out";
+            this->output.filenames.nut = "nut";
+            this->output.nut = false;
+            this->output.files = false;
+            this->output.prints = false;
 
-            conf.lookupValue("just-last-file", this->output.justLastFile);
-            conf.lookupValue("just-last-print", this->output.justLastPrint);
-        }
+            this->output.justLastFile = false;
+            this->output.justLastPrint = false;
+        /* }
         catch(const SettingNotFoundException &nfex)
         {
             this->created_ = false;
             std::cerr << "Output Settings Not Found!" << std::endl;
-        }
+        } */
     }
 
     void getContinuumValues()
     {
-        const Setting& conf = this->cfg.getRoot()["agents"]["continuum"];
+        /* const Setting& conf = this->cfg.getRoot()["agents"]["continuum"];
         try
-        {
-            conf.lookupValue("oxg-D", this->continuum.oxgD);
-            conf.lookupValue("o-consumption-bg", this->continuum.oConsumptionBg);
-            conf.lookupValue("o-border", this->continuum.oBorder);
+        { */
+            this->continuum.oxgD = 4.64894;
+            this->continuum.oConsumptionBg = 0.0;
+            this->continuum.oBorder = 1.0;
 
-            conf.lookupValue("hCoarse", this->continuum.hCoarse);
-            conf.lookupValue("hRefined", this->continuum.hRefined);
-            conf.lookupValue("deltaT", this->continuum.deltaT);
-        }
+            this->continuum.hCoarse = 10.0;
+            this->continuum.hRefined = 1.0;
+            this->continuum.deltaT = 1.0;
+        /* }
         catch(const SettingNotFoundException &nfex)
         {
             this->created_ = false;
             std::cerr << "Continuum Settings Not Found!" << std::endl;
-        }
+        } */
     }
 
     void getAgentValues()
     {
-        const Setting& conf = this->cfg.getRoot()["agents"]["agent"];
+        /* const Setting& conf = this->cfg.getRoot()["agents"]["agent"];
         try
-        {
-            conf.lookupValue("nucleus-radius", this->agent.nucleusRadius);
-            conf.lookupValue("radius", this->agent.radius);
-            conf.lookupValue("action-radius", this->agent.actionRadius);
-            conf.lookupValue("o-consumption", this->agent.oConsumption);
+        { */
+            this->agent.nucleusRadius = 5.295;
+            this->agent.radius = 9.953;
+            this->agent.actionRadius = 1.214;
+            this->agent.oConsumption = 0.06588;
             this->agent.actionRadius *= this->agent.radius;
-        }
+        /* }
         catch(const SettingNotFoundException &nfex)
         {
             this->created_ = false;
             std::cerr << "Agent Settings Not Found!" << std::endl;
-        }
+        } */
     }
 
     void getForcesValues()
     {
-        const Setting& conf = this->cfg.getRoot()["agents"]["forces"];
+        /* const Setting& conf = this->cfg.getRoot()["agents"]["forces"];
         try
-        {
-            conf.lookupValue("c_cca", this->forces.c_cca);
-            conf.lookupValue("c_ccr", this->forces.c_ccr);
-            conf.lookupValue("K", this->forces.K);
-            conf.lookupValue("c_ct", this->forces.c_ct);
-            conf.lookupValue("c_rct", this->forces.c_rct);
+        { */
+            this->forces.c_cca = -0.488836;
+            this->forces.c_ccr = -10.0;
+            this->forces.K = 0.1;
+            this->forces.c_ct = -10.0;//*K
+            this->forces.c_rct = -4.88836;//*K
             this->forces.c_ct *= this->forces.K;
             this->forces.c_rct *= this->forces.K;
 
-        }
+        /* }
         catch(const SettingNotFoundException &nfex)
         {
             this->created_ = false;
             std::cerr << "Forces Settings Not Found!" << std::endl;
-        }
+        } */
     }
 
     void getParametersValues()
     {
-        const Setting& conf = this->cfg.getRoot()["agents"]["parameters"];
+        /* const Setting& conf = this->cfg.getRoot()["agents"]["parameters"];
         try
-        {
-            conf.lookupValue("tauA", this->parameters.tauA);
-            conf.lookupValue("tauP", this->parameters.tauP);
-            conf.lookupValue("tauG1", this->parameters.tauG1);
-            conf.lookupValue("delta_tt", this->parameters.delta_tt);
-            conf.lookupValue("alphaP", this->parameters.alphaP );
-            conf.lookupValue("sigmaH", this->parameters.sigmaH);
-            conf.lookupValue("alphaA", this->parameters.alphaA);
-            conf.lookupValue("gammaA", this->parameters.gammaA);
-        }
+        { */
+            this->parameters.tauA = 8.6;
+            this->parameters.tauP = 18.0;
+            this->parameters.tauG1 = 9.0;
+            this->parameters.delta_tt = 1.0;
+            this->parameters.sigmaH = 0.14681;
+            this->parameters.gammaA = 100.0;
+            this->parameters.alphaA = 0.0;
+            this->parameters.alphaP = 1.0;
+        /* }
         catch(const SettingNotFoundException &nfex)
         {
             this->created_ = false;
             std::cerr << "Parameters Settings Not Found!" << std::endl;
-        }
+        } */
     }
 
 public:
     ConfigHandler (std::string configFile = "config.cfg")
     {
-        this->created_ = false;
+        /* this->created_ = false;
         try
         {
             this->cfg.readFile(configFile.c_str());
@@ -162,8 +157,8 @@ public:
         {
             std::cerr   << "Parse error at " << pex.getFile() << ":" << pex.getLine()
                         << " - " << pex.getError() << std::endl;
-        }
-
+        } */
+        
         this->getInputValues();
         this->getOutputValues();
         this->getAgentValues();

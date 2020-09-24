@@ -10,18 +10,20 @@ from AGPR import AdapGP
 def GenerateData():
   # Fixed seed
   np.random.seed(1234)
-  Par = np.array([0.04,35000.0]) 
-  t = np.array([2.400000e+01, 4.800000e+01, 7.200000e+01, 9.600000e+01, 1.200000e+02, 1.440000e+02, 1.680000e+02, 1.920000e+02, 2.160000e+02, 2.400000e+02, 2.640000e+02, 2.880000e+02])
+  Par = np.array([0.05,10000.0]) 
+  t = np.linspace(24,288,12)
   OutputModel = np.zeros(t.size)
-  InitialCond = 1700.0
+  InitialCond = 1000.0
   variance = InitialCond*0.5
   OutputModel = (InitialCond*Par[1]*np.exp(Par[0]*t))/(InitialCond*(np.exp(Par[0]*t)-1) + Par[1]) + np.random.normal(0, variance, t.size)
+  plt.plot(np.concatenate((0, t), axis=None),np.concatenate((InitialCond, OutputModel), axis=None),"o")
+  plt.show()
   return OutputModel
 
 def Model(Par):  
-  t = np.array([2.400000e+01, 4.800000e+01, 7.200000e+01, 9.600000e+01, 1.200000e+02, 1.440000e+02, 1.680000e+02, 1.920000e+02, 2.160000e+02, 2.400000e+02, 2.640000e+02, 2.880000e+02])
+  t = np.linspace(24,288,12)
   OutputModel = np.zeros(t.size)
-  InitialCond = 1700.0
+  InitialCond = 1000.0
   OutputModel = (InitialCond*Par[1]*np.exp(Par[0]*t))/(InitialCond*(np.exp(Par[0]*t)-1) + Par[1])
   return OutputModel
   
@@ -34,11 +36,11 @@ def ModelAGPR(Par):
 
 def CalibVerhulst():
   # Observational data
-  t = np.array([2.400000e+01, 4.800000e+01, 7.200000e+01, 9.600000e+01, 1.200000e+02, 1.440000e+02, 1.680000e+02, 1.920000e+02, 2.160000e+02, 2.400000e+02, 2.640000e+02, 2.880000e+02])
+  t = np.linspace(24,288,12)
   Data = GenerateData()
   # Boundary of parameter space
-  UpperLimit = np.array([0.3,3.7e4])
-  LowLimit = np.array([0.0,3.0e4])
+  UpperLimit = np.array([0.1x,1e4])
+  LowLimit = np.array([0.0,0.8e4])
   # Tolerance vector
   epsilon = np.array([4.0e4,1.0e4,3.5e3])
   # Calling the method SMC
@@ -66,16 +68,15 @@ def PlotPosterior(Parameter, PlotMatrix):
     plt.xlabel("Parameter %d - MAP = %2.4f" % (i,maxPar), fontsize=12)
   plt.show()
 
-
-t = np.array([2.400000e+01, 4.800000e+01, 7.200000e+01, 9.600000e+01, 1.200000e+02, 1.440000e+02, 1.680000e+02, 1.920000e+02, 2.160000e+02, 2.400000e+02, 2.640000e+02, 2.880000e+02])
+print(GenerateData())
 # Boundary of parameter space
-UpperLimit = np.array([0.3,3.7e4])
-LowLimit = np.array([0.0,3.0e4])
+#UpperLimit = np.array([0.3,3.7e4])
+#LowLimit = np.array([0.0,3.0e4])
 
 #Training the Gaussian Process Regression (uncomment to train the GPR)
 #AdapGP(Model,10, LowLimit, UpperLimit, t.size, tol = 1e-3)
 
-CalibVerhulst()
+#CalibVerhulst()
 
 # Plotting
 # plt.errorbar(t, GenerateData(), yerr=1700.0*0.5,marker=".",ls='none')
