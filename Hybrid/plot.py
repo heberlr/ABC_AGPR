@@ -130,12 +130,14 @@ def Plot_MAP_response():
   plt.subplots_adjust(left=0.14,right=0.90,bottom=0.14,top=0.80)
   plt.show()
   
-Plot_MAP_response()  
-  
 # Read_Plot("CalibSMC.dat",color="gray")
 # Read_Plot("CalibMCMC.dat",color="gray")
 # Read_Plot("CalibMCMC_AGPR.dat",color="blue")
 # Read_Plot("CalibSMC_AGPR.dat",color="blue")
-# plt.show()  
-# Plot_STD("diffenceSTD.txt")
+# plt.show()
+
 # Plot_boxplot()
+
+# Plot_MAP_response() 
+
+# Plot_STD("diffenceSTD.txt")
