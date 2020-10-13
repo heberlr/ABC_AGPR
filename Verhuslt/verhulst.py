@@ -1,9 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pickle
+import pickle #library to store the model trained
+
+# Changing repository
 import sys
 sys.path.append('../src')
+# Loading function to ABC calibration
 from ABC import ABC_SMC,ABC_MCMC
 from AGPR import AdapGP
 
@@ -11,7 +14,7 @@ def GenerateData():
   # Fixed seed - parameters: growth rate = 0.05 and carrying capacity = 10000.0
   np.random.seed(1234)
   Par = np.array([0.05,10000.0]) 
-  t = np.linspace(24,288,12)
+  t = np.linspace(24,288,12) #1-12 days
   OutputModel = np.zeros(t.size)
   InitialCond = 1000.0
   std = InitialCond*0.1
@@ -30,29 +33,28 @@ def ModelAGPR(Par):
   with open('model.pkl', 'rb') as f:
     gpr = pickle.load(f)
   OUT = gpr.predict(ParLocal, return_std=True) 
-  return OUT[0].ravel()
+  return OUT[0].ravel() 
 
-def CalibVerhulst():
+if __name__ == '__main__':
   # Observational data
-  t = np.linspace(24,288,12) #1-12 days
   Data = GenerateData()
-  # Boundary of parameter space
+  # Boundary of parameter space (prior distribution always uniform)
   UpperLimit = np.array([0.1,1.5e4])
   LowLimit = np.array([0.0,0.5e4])
   # Tolerance vector
   epsilon = np.array([1.0e4,0.5e4,0.2e4])
+
   # Calling the method SMC
   outSMC = ABC_SMC(Model, Data, LowLimit, UpperLimit,'CalibSMC.dat',epsilon, 1000)
   # Calling the method MCMC
   outMCMC = ABC_MCMC(Model, Data, LowLimit, UpperLimit,'CalibMCMC.dat',epsilon[-1], 1000)
   
   #Training the Gaussian Process Regression (uncomment to train the GPR)
-  #NsamplesInitial=20
-  #AdapGP(Model,NsamplesInitial, LowLimit, UpperLimit, t.size, tol = 1e-3)
+  NsamplesInitial=40
+  AdapGP(Model,NsamplesInitial, LowLimit, UpperLimit, Data.size, tol = 1e-3)
+  
   # Calling the method SMC-AGPR
   outSMC = ABC_SMC(ModelAGPR, Data, LowLimit, UpperLimit,'CalibSMC_AGPR.dat',epsilon, 1000)
+  
   # Calling the method MCMC-AGPR
   outMCMC = ABC_MCMC(ModelAGPR, Data, LowLimit, UpperLimit,'CalibMCMC_AGPR.dat',epsilon[-1], 1000)
-
-
-# CalibVerhulst()

@@ -109,9 +109,12 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
   weight_prev = np.ones(NumAccept)
   weight = np.ones(NumAccept)
   Kernel = np.zeros(NumAccept)
+  count = np.zeros((NumAccept,2), dtype=int)
+  dist = np.zeros(NumAccept)
+  count_total = 0
   #Loop populations
   for k in range(0, Npop):
-    count = 0
+    count_pop = 0
     # Generate posterior of the population k
     for i in range(0, max_iterations):
         cond = True
@@ -125,16 +128,21 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
             cond = [False for k in range(0,Npar) if theta_star[k]>UpperLimit[k] or theta_star[k]<LowLimit[k]]
         output_model = Model(theta_star)
         distance = np.sqrt(np.sum([(a - b)**2 for a, b in zip(output_model, data)]))
-        print(str(count)+"/"+str(i)+" -- distance: "+str(distance)+" "+ str(theta_star)+"\n")
+        print(str(count_pop)+"/"+str(i)+" -- distance: "+str(distance)+" "+ str(theta_star)+"\n")
+        # Number total of executions
+        count_total = count_total + 1
         if (distance < tol[k]):
-            if (k == 0): weight[count] = 1.0
+            if (k == 0): weight[count_pop] = 1.0
             else:
               for j in range(0, NumAccept): Kernel[j] = np.linalg.norm(multivariate_normal.pdf(theta_ant[j,:], mean=theta_star, cov=var_trasition))
-              weight[count] = 1.0/np.sum(weight_prev*Kernel)
+              weight[count_pop] = 1.0/np.sum(weight_prev*Kernel)
+            # Add to vector count and distance
+            count[count_pop,:] = np.array([count_pop+1,count_total])
+            dist[count_pop] = distance
             # Add sample to population
-            theta_ant[count,:] = theta_star
-            count = count + 1
-        if (count == NumAccept):
+            theta_ant[count_pop,:] = theta_star
+            count_pop = count_pop + 1
+        if (count_pop == NumAccept):
             break
     # Normalize weights 
     weight /= np.sum(weight)
@@ -146,6 +154,6 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
   for i in range(0, NumAccept):
     for j in range(0, Npar):
       file.write(str(theta_ant[i,j])+" ")
-    file.write(str(weight[i])+"\n")  
+    file.write(str(count[i,0])+" "+str(count[i,1])+" "+str(dist[i])+"\n")  
   file.close()
   return theta_ant

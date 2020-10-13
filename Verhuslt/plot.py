@@ -118,5 +118,5 @@ def Plot_boxplot(): # plotting quartiles of methods
   plt.subplots_adjust(left=0.18,right=0.96,bottom=0.11,top=0.88)
   plt.show()
   
-# Plot_MAP_response()
+Plot_MAP_response()
 Plot_boxplot()
