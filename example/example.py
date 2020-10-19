@@ -74,14 +74,15 @@ def Model(Par):
   dead = np.array(input[:,3])
   return np.concatenate((live,dead),axis=None)
 
-x = np.arange(0,1,0.01)
-# Boundary of parameter space
-UpperLimit = np.array([1.5,1.0])
-LowLimit = np.array([0.5,0.0])
+if __name__ == '__main__':
+    x = np.arange(0,1,0.01)
+    # Boundary of parameter space
+    UpperLimit = np.array([1.5,1.0])
+    LowLimit = np.array([0.5,0.0])
 
-#Training the Gaussian Process Regression (uncomment to train the GPR)
-#AdapGP(Reta,50, LowLimit, UpperLimit, x.shape[0], tol = 1.0)
+    #Training the Gaussian Process Regression (uncomment to train the GPR)
+    #AdapGP(Reta,50, LowLimit, UpperLimit, x.shape[0], tol = 1.0)
 
-# Running Reta example
-CalibReta()
+    # Running Reta example
+    CalibReta()
 

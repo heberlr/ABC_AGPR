@@ -46,13 +46,13 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100,
   for i in range(0, max_iterations):
     output_model = Model(theta_star)
     distance = np.sqrt(np.sum([(a - b)**2 for a, b in zip(output_model, data)]))
-    print(str(count)+"/"+str(i)+" -- distance: "+str(distance)+" "+ str(theta_star)+"\n")
+    print(str(count+1)+"/"+str(i+1)+" -- distance: "+str(distance)+" "+ str(theta_star)+"\n")
     if (distance < tol or count == 0):
         theta[count,:] = theta_star
         count = count + 1
         for j in range(0, Npar):
           file.write(str(theta_star[j])+" ")
-        file.write(str(count)+" "+str(i)+" "+str(distance)+"\n")
+        file.write(str(count)+" "+str(i+1)+" "+str(distance)+"\n")
     if (count == NumAccept):
         break
     cond = True
@@ -128,7 +128,7 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
             cond = [False for k in range(0,Npar) if theta_star[k]>UpperLimit[k] or theta_star[k]<LowLimit[k]]
         output_model = Model(theta_star)
         distance = np.sqrt(np.sum([(a - b)**2 for a, b in zip(output_model, data)]))
-        print(str(count_pop)+"/"+str(i)+" -- distance: "+str(distance)+" "+ str(theta_star)+"\n")
+        print(str(count_pop+1)+"/"+str(i+1)+" -- distance: "+str(distance)+" "+ str(theta_star)+"\n")
         # Number total of executions
         count_total = count_total + 1
         if (distance < tol[k]):
