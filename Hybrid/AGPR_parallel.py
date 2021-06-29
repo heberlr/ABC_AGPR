@@ -91,7 +91,7 @@ def ElemSampling(Ind, ParMesh, PosNode):
       d = d+1
   return M  
 
-def AdapGP(Model, NsamplesInitial, LowLimit, UpperLimit, NumQOI, max_iterations=10000, tol=10**-3, NSampCov=40):
+def AdapGP(Model, NsamplesInitial, LowLimit, UpperLimit, NumQOI, max_iterations=1, tol=10**-3, NSampCov=40):
   Npar = UpperLimit.shape[0]
   if rank == 0:
       samples = lhsmdu.sample(Npar,NsamplesInitial) # Latin Hypercube Sampling of Npar variables, and NsamplesInitial samples each.
@@ -219,7 +219,7 @@ def AdapGP(Model, NsamplesInitial, LowLimit, UpperLimit, NumQOI, max_iterations=
       #Difference of std
       np.savetxt('diffenceSTD.txt', MaxStdDiffMean, fmt='%.8e')
   else:
-      Par = np.zeros(Npar+1, dtype='d')   
+      Par = np.zeros(Npar+1, dtype='d')
       while (Par[-1]==0.0):
         comm.Recv(Par, source=0,tag=rank)
         if (Par[-1] == 1.0): break
