@@ -2,14 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from verhulst import Model,GenerateData
+import scipy.stats as sts
 
-
-def PlotPosterior(Parameter, color): 
+def PlotPosterior(Parameter, color):
   sns.set()
   sns.set_style('white')
   MAP = np.zeros(Parameter.shape[1])
   fig, ax = plt.subplots(1,Parameter.shape[1])
-  for i in range(0, Parameter.shape[1]):  
+  for i in range(0, Parameter.shape[1]):
     value = sns.distplot(Parameter[:,i],color=color,ax=ax[i]).get_lines()[0].get_data()
     MAP[i] = value[0][np.argmax(value[1])]
     ax[i].set_title("MAP = %2.4f" % (MAP[i]), fontsize=18)
@@ -18,15 +18,15 @@ def PlotPosterior(Parameter, color):
     ax[0].set_ylabel('Density',fontsize=18)
   plt.subplots_adjust(left=0.13,right=0.95,bottom=0.15,top=0.67,wspace=0.38)
   return MAP
-  
+
 def Read_Plot(file,color): # reading and plotting paramaters calibrated
   input = np.loadtxt(file, dtype='f', delimiter=' ')
   par1 = np.array(input[:,0])
   par2 = np.array(input[:,1])
   MatrixPar = np.column_stack((par1,par2))
   return PlotPosterior(MatrixPar, color)
-  
-  
+
+
 def Plot_MAP_response():
   MAP1 = Read_Plot("CalibMCMC.dat",color="gray")
   MAP2 = Read_Plot("CalibMCMC_AGPR.dat",color="blue")
@@ -38,10 +38,10 @@ def Plot_MAP_response():
   QOI2 = Model(np.array(MAP2)) # MCMC_AGPR
   QOI3 = Model(np.array(MAP3)) # SMC
   QOI4 = Model(np.array(MAP4)) # SMC_AGPR
-  
+
   data = GenerateData()
   time = np.linspace(0,288,13) #0-12 days
-  
+
   plt.figure(figsize=(12,8))
   plt.errorbar(time,np.insert(data,0,1000.0),yerr=200.0,fmt='o',color='black',label='Obs. data')
   plt.plot(time,np.insert(QOI1,0,1000.0),color='gray',label='MCMC',ls='-.')
@@ -72,14 +72,14 @@ def Plot_boxplot(): # plotting quartiles of methods
           if (idx % 4 > 1 and elem == 'caps'): color_temp = "blue"
           if (idx % 4 < 2 and elem == 'whiskers'): color_temp = "gray"
           if (idx % 4 > 1 and elem == 'whiskers'): color_temp = "blue"
-          if (elem == 'medians'): 
+          if (elem == 'medians'):
             color_temp = color
             linewidth_temp = 2
-          else: 
+          else:
             linewidth_temp = 3
           plt.setp(bp[elem][idx], color=color_temp, linewidth = linewidth_temp)
     return
-    
+
   boxprops = dict(linestyle='--', linewidth=3, color='darkgoldenrod')
   flierprops = dict(marker='o', markerfacecolor='green', markersize=12,
                   linestyle='none')
@@ -87,7 +87,7 @@ def Plot_boxplot(): # plotting quartiles of methods
   meanpointprops = dict(marker='D', markeredgecolor='black',
                       markerfacecolor='firebrick')
   meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
-    
+
   input1 = np.loadtxt("CalibMCMC.dat", dtype='f', delimiter=' ')
   input2 = np.loadtxt("CalibSMC.dat", dtype='f', delimiter=' ')
   input3 = np.loadtxt("CalibMCMC_AGPR.dat", dtype='f', delimiter=' ')
@@ -117,6 +117,43 @@ def Plot_boxplot(): # plotting quartiles of methods
   plt.ylabel(r'$\kappa$', fontsize=18)
   plt.subplots_adjust(left=0.18,right=0.96,bottom=0.11,top=0.88)
   plt.show()
-  
+
+def Kullback_Leibler_divergence(p, q):
+    return np.sum(np.where(p != 0, p * np.log(p / q), 0))
+
+def smoothed_hist_kl_distance(fileA, fileB, par, nbins=100, sigma=0.0001):
+    inputA = np.loadtxt(fileA, dtype='f', delimiter=' ')
+    inputB = np.loadtxt(fileB, dtype='f', delimiter=' ')
+    parA = np.array(inputA[:,par])
+    parB = np.array(inputB[:,par])
+    # ahist, bhist = (np.histogram(parA, bins=nbins)[0],np.histogram(parB, bins=nbins)[0])
+    # asmooth, bsmooth = (gaussian_filter(ahist, sigma), gaussian_filter(bhist, sigma))
+    min = np.min([parA,parB])
+    max = np.max([parA,parB])
+    DensityA, barA = np.histogram(parA,bins=nbins,range=(min,max),density=True)
+    DensityB, barB = np.histogram(parB,bins=nbins,range=(min,max),density=True)
+    kdeA = sts.gaussian_kde(parA)
+    kdeB = sts.gaussian_kde(parB)
+    x = np.linspace(min, max,nbins)
+    NormDensityA = DensityA/sum(DensityA)
+    NormDensityB = DensityB/sum(DensityB)
+    plt.bar(barA[:-1], NormDensityA, width=np.diff(barA), ec='k', align='edge', label='histogram_A',alpha=0.5)
+    plt.bar(barB[:-1], NormDensityB, width=np.diff(barB), ec='k', align='edge', label='histogram_B',alpha=0.5)
+    norm_kdeA = kdeA.pdf(x)/sum(kdeA.pdf(x))
+    norm_kdeB = kdeB.pdf(x)/sum(kdeB.pdf(x))
+    plt.plot(x, norm_kdeA, c='C0', lw=4, label='KDE_A')
+    plt.plot(x, norm_kdeB, c='C1', lw=4, label='KDE_B')
+    # plt.show()
+    return Kullback_Leibler_divergence(np.array(norm_kdeA), np.array(norm_kdeB))
+
+# # Calibration ABC
 Plot_MAP_response()
-Plot_boxplot()
+
+# Kullback-Leibler divergence
+# print("K-L (SMC,SMC_AGPR) for r: %e" % smoothed_hist_kl_distance("CalibSMC.dat", "CalibSMC_AGPR.dat", par=0))
+# print("K-L (MCMC,MCMC_AGPR) for r: %e" % smoothed_hist_kl_distance("CalibMCMC.dat", "CalibMCMC_AGPR.dat", par=0))
+# print("K-L (SMC,SMC_AGPR) for K: %e" % smoothed_hist_kl_distance("CalibSMC.dat", "CalibSMC_AGPR.dat", par=1))
+# print("K-L (MCMC,MCMC_AGPR) for K: %e" % smoothed_hist_kl_distance("CalibMCMC.dat", "CalibMCMC_AGPR.dat", par=1))
+
+# # Percentile of distributions
+# Plot_boxplot()

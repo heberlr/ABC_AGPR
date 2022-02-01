@@ -6,19 +6,19 @@ def PlotPosterior(Parameter, color): # plot histograms with fitting of the densi
   sns.set()
   sns.set_style('white')
   fig, ax = plt.subplots(1,Parameter.shape[1])
-  for i in range(0, Parameter.shape[1]):  
+  for i in range(0, Parameter.shape[1]):
     value = sns.distplot(Parameter[:,i],color=color,ax=ax[i]).get_lines()[0].get_data()
     maxPar = value[0][np.argmax(value[1])]
     ax[i].set_title("MAP = %2.4f" % (maxPar), fontsize=18)
-    if (i==0): 
+    if (i==0):
         ax[0].set_xlabel(r'$\bar{\alpha}_{P}$',fontsize=18)
         ax[0].set_xlim([0,0.6])
-    if (i==1): 
+    if (i==1):
         ax[1].set_xlabel(r'$\bar{\alpha}_{D}$',fontsize=18)
         ax[1].set_xlim([0,0.4])
     ax[0].set_ylabel('Density',fontsize=18)
   plt.subplots_adjust(left=0.13,right=0.95,bottom=0.15,top=0.67,wspace=0.38)
-  
+
 def Read_Plot(file,color,name): # reading and plotting paramaters calibrated
   input = np.loadtxt(file, dtype='f', delimiter=' ')
   par1 = np.array(input[:,0])
@@ -27,7 +27,7 @@ def Read_Plot(file,color,name): # reading and plotting paramaters calibrated
   PlotPosterior(MatrixPar, color)
   plt.savefig(name+'.png')
   plt.savefig(name+'.svg')
-  
+
 def Plot_STD(file): # plotting convergence of AGPR
   input = np.loadtxt(file, dtype='f', delimiter=' ')
   STD = np.array(input)
@@ -56,14 +56,14 @@ def Plot_boxplot(): # plotting quartiles of methods
           # if (idx % 4 < 2 and elem == 'whiskers'): color_temp = "gray"
           # if (idx % 4 > 1 and elem == 'whiskers'): color_temp = "blue"
           if (elem == 'whiskers' or elem == 'caps' or elem == 'boxes'):color_temp = "blue"
-          if (elem == 'medians'): 
+          if (elem == 'medians'):
             color_temp = color
             linewidth_temp = 2
-          else: 
+          else:
             linewidth_temp = 3
           plt.setp(bp[elem][idx], color=color_temp, linewidth = linewidth_temp)
     return
-    
+
   boxprops = dict(linestyle='--', linewidth=3, color='darkgoldenrod')
   flierprops = dict(marker='o', markerfacecolor='green', markersize=12,
                   linestyle='none')
@@ -71,7 +71,7 @@ def Plot_boxplot(): # plotting quartiles of methods
   meanpointprops = dict(marker='D', markeredgecolor='black',
                       markerfacecolor='firebrick')
   meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
-    
+
   input1 = np.loadtxt("GPR_100/CalibMCMC_GPR.dat", dtype='f', delimiter=' ')
   input2 = np.loadtxt("GPR_100/CalibSMC_GPR.dat", dtype='f', delimiter=' ')
   input3 = np.loadtxt("GPR_200/CalibMCMC_GPR.dat", dtype='f', delimiter=' ')
@@ -205,9 +205,9 @@ def Plot_MAP_response():
   Mean1 = np.mean(QOI1,axis=0)
   Mean2 = np.mean(QOI2,axis=0)
   Mean3 = np.mean(QOI3,axis=0)
-  Mean4 = np.mean(QOI4,axis=0)  
+  Mean4 = np.mean(QOI4,axis=0)
   data = np.array([0.56829, 0.5681037, 0.5686626, 0.5691672, 0.6176569, 0.6802602, 0.7250002, 0.7600671, 0.7605562, 0.7590967, 0.7202258, 0.6275473, 0.538145, 0.4514444, 0.3496518, 0.2844012, 0.1959615, 0.1393592, 0.1014277, 0.06882953, 0.04892439, 0.0309368, 0.02281637, 0.01860866, 0.01670665, 0.01145865, 0.00999915, 0.01005349, 0.00989046, 0.00784871, 0.0077245, 0.00554301, 0.00337704, 0.01571294, 0.0155732, 0.0155111, 0.01561202, 0.0151928, 0.01500648, 0.01520833, 0.0155111, 0.01558873, 0.01829036, 0.07083246, 0.1857993, 0.2866292, 0.3938561, 0.4960524, 0.5698349, 0.6533526, 0.7113057, 0.7336408, 0.7633044, 0.7718518, 0.784506, 0.7873551, 0.7897307, 0.7894745, 0.7897229, 0.7902896, 0.7875647, 0.786703, 0.785818, 0.784638, 0.7825574, 0.7837685 ]) # [Live; Dead] -> parameter 0.2 and 0.15 with normal(0;0.03)
-   
+
   time = np.linspace(0,96,33)
   plt.figure(figsize=(12,8))
   plt.errorbar(time,data[0:33],yerr=0.03,fmt='o',color='green',label='Live')
@@ -249,15 +249,12 @@ def Plot_MAP_response():
 # Read_Plot("GPR_900/CalibMCMC_GPR.dat",color="blue", name='Posterior_MCMC_900')
 # Read_Plot("GPR_1000/CalibSMC_GPR.dat",color="blue", name='Posterior_SMC_1000')
 # Read_Plot("GPR_1000/CalibMCMC_GPR.dat",color="blue", name='Posterior_MCMC_1000')
-
-
-
 # plt.show()
 
 # Plot_boxplot()
 
-# PlotSamplesParameters()
+PlotSamplesParameters()
 
-Plot_MAP_response() 
+# Plot_MAP_response()
 
-#Plot_STD("../Output_AGPR/diffenceSTD.txt")
+Plot_STD("../Output_AGPR/diffenceSTD.txt")
