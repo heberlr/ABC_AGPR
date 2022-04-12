@@ -451,7 +451,7 @@ void Macro2D::diference(){
 	//Calcula U[]
 	pmgmres_ilu_cr (this->mesh->matrixSize, this->mesh->nzNum, &mesh->rowPtr[0], mesh->colInd, mesh->val, &this->mesh->uO[0], mesh->B, 1000/*itr_max*/, 5/*mr*/, 1.0e-5/*tol_abs*/, 1.0e-5/*tol_rel*/);
 
-	if(this->config->output.nut && this->frame->time % 3 == 0)
+	if(this->config->output.nut)
 		FileFactory::makeFile(this->frame, this->config, this->mesh, NUT);
 }
 

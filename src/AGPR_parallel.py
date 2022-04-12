@@ -51,7 +51,7 @@ def CreateMesh(Gridsize, x0, xf):
 def AssPosMesh(Mesh):
   k = Mesh.shape[0]
   n = Mesh.shape[1]
-  dy = Mesh[1,0] - Mesh[0,0] 
+  dy = Mesh[1,0] - Mesh[0,0]
   ElemPos = []
   ElemPosX = []
   for i in range(0,k):
@@ -72,7 +72,7 @@ def AssPosMesh(Mesh):
 
 def ElemSampling(Ind, ParMesh, PosNode):
   n = ParMesh.shape[1] # Number of parameters
-  k = PosNode.shape[1] # Number of neighbours nodes 
+  k = PosNode.shape[1] # Number of neighbours nodes
   M = np.zeros(n)
   d = 0
   for i in range(1,k):
@@ -86,23 +86,23 @@ def ElemSampling(Ind, ParMesh, PosNode):
     if (Count == 1):
       M[d] = ParMesh[PosNode[Ind,0],d] + np.amax(c)*np.random.uniform(0,1)
       d = d+1
-  return M  
+  return M
 
-def AdapGP(Model, NsamplesInitial, LowLimit, UpperLimit, NumQOI, NumRep =10, max_iterations=10000, tol=10**-3, NSampCov=40):
+def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, max_iterations=10000, tol=10**-3, NSampCov=40):
   Npar = UpperLimit.shape[0]
   if rank == 0:
-      samples = lhsmdu.sample(Npar,NsamplesInitial) # Latin Hypercube Sampling of Npar variables, and NsamplesInitial samples each.
+      samples = lhsmdu.sample(Npar,NpartionsLHD) # Latin Hypercube Sampling of Npar variables, and NpartionsLHD samples each.
       vertices = CreateVert(Npar) # Vertices of the hypercube
       samples = np.array(samples).T
 
       #Concatenate samples and nodes of parametric hypercube
       samples = np.concatenate((samples, vertices), axis=0)
-      
+
       #Mesh for the parametric space
       x_0 = np.zeros(Npar)
       x_f = np.ones(Npar)
 
-      ParMesh = CreateMesh(NsamplesInitial+1,x_0,x_f) # Parametric space unity
+      ParMesh = CreateMesh(NpartionsLHD+1,x_0,x_f) # Parametric space unity
       PosNode = AssPosMesh(ParMesh) # Reference of the nodes associate to elemets
 
       #Transform unit hypercube in real values
@@ -121,36 +121,36 @@ def AdapGP(Model, NsamplesInitial, LowLimit, UpperLimit, NumQOI, NumRep =10, max
         for indx in range(0,NumRep):
             rankID = indx%(size-1) + 1
             comm.Recv(QOI_replicas[indx,:], source=rankID, tag=rankID+size)
-        OutputModel[i,:] = np.mean(QOI_replicas, axis=0)   
+        OutputModel[i,:] = np.mean(QOI_replicas, axis=0)
 
       #Set initial hyperparemeter of the GPR
       hyp = np.zeros(Npar)
       for j in range(0, Npar):
         hyp[j] = 0.1*(UpperLimit[j]-LowLimit[j])
-      
+
       #Set kernel
       kernel = RBF(hyp)
-      
+
       #Set GPR options
       gpr = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=50, alpha=10**-5)
-      
+
       #Generate the initial fit
       gpr.fit(samples,OutputModel)
-      
+
       # Obtain prectidion for the mesh points
-      GPstd = np.zeros((NsamplesInitial+1)**Npar)
-      StdElem = np.zeros((NsamplesInitial)**Npar)
+      GPstd = np.zeros((NpartionsLHD+1)**Npar)
+      StdElem = np.zeros((NpartionsLHD)**Npar)
       for i in range(0, GPstd.shape[0]):
         OutGP = gpr.predict([np.array(ParMesh[i,:])], return_std=True)
         GPstd[i] = np.squeeze(OutGP[1])
-      
-      # Calculating variance in element of the mesh  
+
+      # Calculating variance in element of the mesh
       for i in range(0, StdElem.shape[0]):
         StdElem[i] = 0
         for j in range(0, 2**Npar):
-          StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]      
+          StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]
         StdElem[i] = (1/(2**Npar))*StdElem[i]
-      
+
       #Calculating difference between StdMax amd StdMean
       MeanStd = np.mean(StdElem)
       InitialSamples = samples
@@ -158,7 +158,7 @@ def AdapGP(Model, NsamplesInitial, LowLimit, UpperLimit, NumQOI, NumRep =10, max
       MaxStdDiffMean.append(StdElem.max() - MeanStd)
       print("Initial step...")
       # Main loop
-      for k in range(0,max_iterations):    
+      for k in range(0,max_iterations):
         StdMax = np.amax(StdElem)
         Ind = np.argmax(StdElem)
         value = ElemSampling(Ind,ParMesh,PosNode)
@@ -173,61 +173,50 @@ def AdapGP(Model, NsamplesInitial, LowLimit, UpperLimit, NumQOI, NumRep =10, max
         AddSample = np.array([value])
         samples = np.concatenate((samples, AddSample), axis=0)
         OutputModel = np.concatenate((OutputModel, AddSolution), axis=0)
-        
+
         #Generate the new fit
         gpr.fit(samples,OutputModel)
-        
+
         # Obtaing prectidion for mesh points
         for i in range(0, GPstd.shape[0]):
           OutGP = gpr.predict([np.array(ParMesh[i,:])], return_std=True)
           GPstd[i] = np.squeeze(OutGP[1])
-        
-        # Calculating variance in element of the mesh  
+
+        # Calculating variance in element of the mesh
         for i in range(0, StdElem.shape[0]):
           StdElem[i] = 0
           for j in range(0, 2**Npar):
-            StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]  
+            StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]
           StdElem[i] = (1/(2**Npar))*StdElem[i]
 
         #Calculating difference between StdMax amd StdMean
         MeanStd = np.mean(StdElem)
         MaxStdDiffMean.append(StdElem.max() - MeanStd)
-        
-        print("Number of new samples: "+str(k+1)+" Crit_Diff: "+str(MaxStdDiffMean[-1]))  
+
+        print("Number of new samples: "+str(k+1)+" Crit_Diff: "+str(MaxStdDiffMean[-1]))
         #Stop criterion
         if (k >= NSampCov) and (CritConv(MaxStdDiffMean[-NSampCov:]) < tol):
           break
-      
+
       # Finished Threads
       for rankID in range(1,size):
         comm.Send(np.append(np.zeros(Npar),1.0), dest=rankID, tag=rankID)
-        
+
       #Finishing the metamodel
-      print("==============================================================================") 
-      print("Total of iterations: ", k+1) 
-      print("Total of samples: ", samples.shape[0]) 
+      print("==============================================================================")
+      print("Total of iterations: ", k+1)
+      print("Total of samples: ", samples.shape[0])
       print("Difference between Max(std) and Mean(std): ", MaxStdDiffMean[-1])
-      print("==============================================================================") 
-        
-      # SAVE
-      #GPR
-      with open('model.pkl','wb') as f:
-        pickle.dump(gpr,f)
-      #Samples
-      samples = np.matrix(samples)
-      with open('samples.txt','wb') as f:
-        for line in samples:
-            np.savetxt(f, line, fmt='%.8e')
-      #Difference of std
-      np.savetxt('diffenceSTD.txt', MaxStdDiffMean, fmt='%.8e')
+      print("==============================================================================")
+
+      # SAVE dictionary GPR, samples, difference
+      with open(folder+'/Dictionary.pkl','wb') as f:
+          pickle.dump({"GPR":gpr, "samples_parameters":samples, "difference_std": MaxStdDiffMean},f)
   else:
-      Par = np.zeros(Npar+1, dtype='d')   
+      Par = np.zeros(Npar+1, dtype='d')
       while (Par[-1]==0.0):
         comm.Recv(Par, source=0,tag=rank)
         #print("Rank: "+str(rank)+" Parameter: "+str(Par))
         if (Par[-1] == 1.0): break
-        OUT = Model(Par[:-1],NumQOI)
+        OUT = Model(Par[:-1])
         comm.Send(OUT, dest=0,tag=rank+size)
-
-
-

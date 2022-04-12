@@ -44,7 +44,7 @@ void FileFactory::makeFile(Frame* frame, ConfigHandler* config, Mesh* mesh, Outp
 
     if (config->input.fileFormat == BI_D) {
         if (mode == NUT) {
-            sprintf(name,"%s/%s%d-%05d2D.dat", config->output.paths.nut.c_str(), config->output.filenames.nut.c_str(), config->output.filenames.number, frame->time);
+            sprintf(name,"%s/%s%d-%05d-2D.dat", config->output.paths.nut.c_str(), config->output.filenames.nut.c_str(), config->output.filenames.number, frame->time);
         }
         arq = fopen(name,"w");
         fprintf(arq,"# %lf %lf\n", frame->domain.x, frame->domain.y);
@@ -59,7 +59,7 @@ void FileFactory::makeFile(Frame* frame, ConfigHandler* config, Mesh* mesh, Outp
         }
     } else {
         if (mode == NUT) {
-            sprintf(name,"%s/%s%d-%05d3D.dat", config->output.paths.nut.c_str(), config->output.filenames.nut.c_str(), config->output.filenames.number, frame->time);
+            sprintf(name,"%s/%s%d-%05d-3D.dat", config->output.paths.nut.c_str(), config->output.filenames.nut.c_str(), config->output.filenames.number, frame->time);
         }
         arq = fopen(name,"w");
         fprintf(arq,"# %lf %lf %lf \n", frame->domain.x, frame->domain.y, frame->domain.z);

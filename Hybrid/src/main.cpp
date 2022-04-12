@@ -24,7 +24,7 @@ int main (int argc, char *argv[]){
 
 	if (!config.created())
 		return EXIT_FAILURE;
-    
+
 	//One execution
 	// Ran ran(config.input.seed);
 	//
@@ -79,7 +79,10 @@ int main (int argc, char *argv[]){
   sprintf(name,"%s%s%03d-confluence-2D.dat", path,config.output.filenames.agent.c_str(), config.output.filenames.number);
   FILE *arq = fopen(name, "w");
   fprintf(arq, "%05d %e %e\n", frame->time ,macro->LiveConfluence, macro->DeadConfluence); */
-    printf("%.1lf %e %e\n", float(frame->time) ,macro->LiveConfluence, macro->DeadConfluence);
+  printf("%.1lf %e %e\n", float(frame->time) ,macro->LiveConfluence, macro->DeadConfluence);
+	// Print files -- uncomment two line bellow
+	config.output.files = false;
+	config.output.nut = false;
 
 	while(frame->time < config.input.timeMax){
 		frame->time += config.parameters.delta_tt;
