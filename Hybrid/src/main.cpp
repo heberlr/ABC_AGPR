@@ -81,8 +81,8 @@ int main (int argc, char *argv[]){
   fprintf(arq, "%05d %e %e\n", frame->time ,macro->LiveConfluence, macro->DeadConfluence); */
   printf("%.1lf %e %e\n", float(frame->time) ,macro->LiveConfluence, macro->DeadConfluence);
 	// Print files -- uncomment two line bellow
-	config.output.files = true;
-	config.output.nut = true;
+	config.output.files = false;
+	config.output.nut = false;
 
 	while(frame->time < config.input.timeMax){
 		frame->time += config.parameters.delta_tt;

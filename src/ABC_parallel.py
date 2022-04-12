@@ -8,7 +8,7 @@ from mpi4py import MPI
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
-  
+
 def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol = np.array([98,99,100]), NumAccept = 100, max_iterations=100000, var_trasition=0.2):
   #*****************************************************************************
   #
@@ -38,17 +38,17 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol
   #    real Nrep: number of replicates for each parameter set
   #
   #    array real tol: tolerance vector to evaluate the distance between observational and model data (must be in ascending order). The size of this vector is the number of populations.
-  #    
+  #
   #    int NumAccept: the number of accepted parameters that it will generate a posterior distribution (for each population).
   #
   #    int max_iterations: the number max of execution of model for each population.
-  #     
-  #    real var_trasition: variance of the normal distribution for sampling. 
-  
+  #
+  #    real var_trasition: variance of the normal distribution for sampling.
+
   Npar = UpperLimit.shape[0] # Number of parameters
   Nqoi = data.shape[0] # Number of quantity of interest
   if rank == 0:
-      file = open(FILE,"w")    
+      file = open(FILE,"w")
       Npop = tol.shape[0]
       theta_star = np.zeros(Npar, dtype='d')
       theta_ant = np.zeros((NumAccept,Npar))
@@ -98,28 +98,28 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol
                 count_pop = count_pop + 1
             if (count_pop == NumAccept):
                 break
-        # Normalize weights 
+        # Normalize weights
         weight /= np.sum(weight)
         weight[np.isnan(weight)] = 0.0
         weight[-1] += np.abs(1.0-np.sum(weight))
         weight_prev = np.copy(weight)
-        
+
       # Print last population
       for i in range(0, NumAccept):
         for j in range(0, Npar):
           file.write(str(theta_ant[i,j])+" ")
-        file.write(str(count[i,0])+" "+str(count[i,1])+" "+str(dist[i])+"\n")  
+        file.write(str(count[i,0])+" "+str(count[i,1])+" "+str(dist[i])+"\n")
       file.close()
       # Finished Threads
       for rankID in range(1,size):
         comm.Send(np.append(theta_star,1.0), dest=rankID, tag=rankID)
       return theta_ant
   else:
-      Par = np.zeros(Npar+1, dtype='d')   
+      Par = np.zeros(Npar+1, dtype='d')
       while (Par[-1]==0.0):
         comm.Recv(Par, source=0,tag=rank)
         if (Par[-1] == 1.0): break
-        OUT = Model(Par[:-1],Nqoi)
+        OUT = Model(Par[:-1])
         comm.Send(OUT, dest=0,tag=rank+size)
 
 
@@ -153,17 +153,17 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10,
   #    real Nrep: number of replicates for each parameter set
   #
   #    real tol: tolerance between observational and model data.
-  #    
+  #
   #    int NumAccept: the number of accepted parameters that it will generate a posterior distribution.
   #
   #    int max_iterations: the number max of execution of model.
-  #     
+  #
   #    real var_trasition: variance of the normal distribution for sampling.
-  
+
   Npar = UpperLimit.shape[0] # Number of parameters
   Nqoi = data.shape[0] # Number of quantity of interest
   if rank == 0:
-      file = open(FILE,"w") 
+      file = open(FILE,"w")
       count = 0
       Npar = UpperLimit.shape[0]
       theta_star = np.zeros(Npar)
@@ -179,7 +179,7 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10,
         for ind in range(0,Nrep):
             rankID = ind%(size-1) + 1
             comm.Recv(QOI[ind,:], source=rankID, tag=rankID+size)
-        output_model = np.mean(QOI, axis=0)  
+        output_model = np.mean(QOI, axis=0)
 
         distance = np.sqrt(np.sum([(a - b)**2 for a, b in zip(output_model, data)]))
         print(str(count+1)+"/"+str(i+1)+" -- distance: "+str(distance)+" "+ str(theta_star)+"\n")
@@ -202,10 +202,9 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10,
         comm.Send(np.append(theta_star,1.0), dest=rankID, tag=rankID)
       return theta
   else:
-      Par = np.zeros(Npar+1, dtype='d')   
+      Par = np.zeros(Npar+1, dtype='d')
       while (Par[-1]==0.0):
         comm.Recv(Par, source=0,tag=rank)
         if (Par[-1] == 1.0): break
-        OUT = Model(Par[:-1],Nqoi)
+        OUT = Model(Par[:-1])
         comm.Send(OUT, dest=0,tag=rank+size)
-
