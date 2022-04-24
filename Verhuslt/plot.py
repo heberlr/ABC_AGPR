@@ -5,40 +5,55 @@ from verhulst import Model,GenerateData
 import scipy.stats as sts
 import pickle #library to store the model trained
 
-def CustomPlotPosterior(Parameter, color):
-  sns.set()
-  sns.set_style('white')
-  MAP = np.zeros(Parameter.shape[1])
-  fig, ax = plt.subplots(1,Parameter.shape[1])
-  for i in range(0, Parameter.shape[1]):
-    value = sns.distplot(Parameter[:,i],color=color,ax=ax[i]).get_lines()[0].get_data()
-    MAP[i] = value[0][np.argmax(value[1])]
-    ax[i].set_title("MAP = %2.4f" % (MAP[i]), fontsize=18)
-    if (i==0): ax[0].set_xlabel(r'$r$',fontsize=18)
-    if (i==1): ax[1].set_xlabel(r'$\kappa$',fontsize=18)
-    ax[0].set_ylabel('Density',fontsize=18)
-  plt.subplots_adjust(left=0.13,right=0.95,bottom=0.15,top=0.67,wspace=0.38)
-  return MAP
+def ReadParameters(File):
+    input = np.loadtxt(File, dtype='float64', delimiter=' ')
+    par1 = np.array(input[:,0])
+    par2 = np.array(input[:,1])
+    return np.column_stack((par1,par2))
 
-def Read_Plot(file,color): # reading and plotting paramaters calibrated
-  input = np.loadtxt(file, dtype='float64', delimiter=' ')
-  par1 = np.array(input[:,0])
-  par2 = np.array(input[:,1])
-  MatrixPar = np.column_stack((par1,par2))
-  return CustomPlotPosterior(MatrixPar, color)
+def Get_MAP(Parameter):
+    MAP = np.zeros(Parameter.shape[1])
+    for i in range(0, Parameter.shape[1]):
+        plt.clf()
+        value = sns.kdeplot(Parameter[:,i]).get_lines()[0].get_data()
+        MAP[i] = value[0][np.argmax(value[1])]
+        plt.title("MAP = %2.4f" % (MAP[i]), fontsize=18)
+        #plt.axvline(MAP[i],color='Red')
+        #plt.show()
+        plt.clf()
+        plt.close()
+    return MAP
+
+def PlotPosterior(file, color):
+    Parameter = ReadParameters(file)
+    MAP = Get_MAP(Parameter)
+    # Plotting
+    sns.set()
+    sns.set_style('ticks')
+    fig, ax = plt.subplots(1,Parameter.shape[1])
+    for i in range(0, Parameter.shape[1]):
+        sns.histplot(Parameter[:,i],stat='probability',color=color, kde=True, ax=ax[i])
+        ax[i].axvline(MAP[i],color='Red')
+        ax[i].set_title("MAP = %2.4f" % (MAP[i]), fontsize=18)
+        if (i==0): ax[0].set_xlabel(r'$r$',fontsize=18)
+        if (i==1): ax[1].set_xlabel(r'$\kappa$',fontsize=18)
+    ax[0].set(ylim = (0,0.12))
+    ax[1].set(ylabel=None,ylim = (0,0.12))
+    plt.subplots_adjust(left=0.13,right=0.95,bottom=0.15,top=0.67,wspace=0.38)
+    FileOut = file.split("/")[-1].split(".")[0]+".jpg"
+    fig.savefig(FileOut, dpi=120,bbox_inches='tight')
 
 
 def Plot_MAP_response():
-  MAP1 = Read_Plot("Calibration/CalibMCMC.dat",color="gray")
-  MAP2 = Read_Plot("Calibration/CalibMCMC_AGPR.dat",color="blue")
-  MAP3 = Read_Plot("Calibration/CalibSMC.dat",color="gray")
-  MAP4 = Read_Plot("Calibration/CalibSMC_AGPR.dat",color="blue")
-  # plt.show()
+  PlotPosterior("Calibration/CalibMCMC.dat",color="gray")
+  PlotPosterior("Calibration/CalibMCMC_AGPR.dat",color="blue")
+  PlotPosterior("Calibration/CalibSMC.dat",color="gray")
+  PlotPosterior("Calibration/CalibSMC_AGPR.dat",color="blue")
 
-  QOI1 = Model(np.array(MAP1)) # MCMC
-  QOI2 = Model(np.array(MAP2)) # MCMC_AGPR
-  QOI3 = Model(np.array(MAP3)) # SMC
-  QOI4 = Model(np.array(MAP4)) # SMC_AGPR
+  QOI1 = Model(Get_MAP(ReadParameters("Calibration/CalibMCMC.dat"))) # MCMC
+  QOI2 = Model(Get_MAP(ReadParameters("Calibration/CalibMCMC_AGPR.dat"))) # MCMC_AGPR
+  QOI3 = Model(Get_MAP(ReadParameters("Calibration/CalibSMC.dat"))) # SMC
+  QOI4 = Model(Get_MAP(ReadParameters("Calibration/CalibSMC_AGPR.dat"))) # SMC_AGPR
 
   data = GenerateData()
   time = np.linspace(0,288,13) #0-12 days
@@ -55,7 +70,7 @@ def Plot_MAP_response():
   plt.xlabel('Time (hours)', fontsize=18)
   plt.ylabel('Number of cells', fontsize=18)
   plt.subplots_adjust(left=0.14,right=0.90,bottom=0.14,top=0.80)
-  plt.show()
+  plt.savefig("MAP_response.jpg", dpi=120,bbox_inches='tight')
 
 
 def Plot_boxplot(): # plotting quartiles of methods
@@ -110,14 +125,15 @@ def Plot_boxplot(): # plotting quartiles of methods
   bp = plt.boxplot(MatrixPar1, showfliers=False, labels=["MCMC","MCMC_AGPR","SMC","SMC_AGPR"])
   color_box(bp, 'red')
   plt.ylabel(r'$r$', fontsize=18)
+  plt.savefig("BoxPlot_r.jpg", dpi=120,bbox_inches='tight')
   plt.figure()
   plt.xticks(fontsize=14)
   plt.yticks(fontsize=18)
   bp = plt.boxplot(MatrixPar2, showfliers=False, labels=["MCMC","MCMC_AGPR","SMC","SMC_AGPR"])
   color_box(bp, 'red')
   plt.ylabel(r'$\kappa$', fontsize=18)
+  plt.savefig("BoxPlot_kappa.jpg", dpi=120,bbox_inches='tight')
   plt.subplots_adjust(left=0.18,right=0.96,bottom=0.11,top=0.88)
-  plt.show()
 
 def Kullback_Leibler_divergence(p, q):
     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
@@ -127,8 +143,6 @@ def smoothed_hist_kl_distance(fileA, fileB, par, nbins=100, sigma=0.0001):
     inputB = np.loadtxt(fileB, dtype='float64', delimiter=' ')
     parA = np.array(inputA[:,par])
     parB = np.array(inputB[:,par])
-    # ahist, bhist = (np.histogram(parA, bins=nbins)[0],np.histogram(parB, bins=nbins)[0])
-    # asmooth, bsmooth = (gaussian_filter(ahist, sigma), gaussian_filter(bhist, sigma))
     min = np.min([parA,parB])
     max = np.max([parA,parB])
     DensityA, barA = np.histogram(parA,bins=nbins,range=(min,max),density=True)
@@ -140,11 +154,6 @@ def smoothed_hist_kl_distance(fileA, fileB, par, nbins=100, sigma=0.0001):
     NormDensityB = DensityB/sum(DensityB)
     norm_kdeA = kdeA.pdf(x)/sum(kdeA.pdf(x))
     norm_kdeB = kdeB.pdf(x)/sum(kdeB.pdf(x))
-    # plt.bar(barA[:-1], NormDensityA, width=np.diff(barA), ec='k', align='edge', label='histogram_A',alpha=0.5)
-    # plt.bar(barB[:-1], NormDensityB, width=np.diff(barB), ec='k', align='edge', label='histogram_B',alpha=0.5)
-    # plt.plot(x, norm_kdeA, c='C0', lw=4, label='KDE_A')
-    # plt.plot(x, norm_kdeB, c='C1', lw=4, label='KDE_B')
-    # plt.show()
     return Kullback_Leibler_divergence(np.array(norm_kdeA), np.array(norm_kdeB))
 
 
@@ -160,7 +169,7 @@ def PlotAGPR_Convergence():
     ax1.set_title('Difference between max(std) and mean(std)')
     ax2.scatter(MatrixPar[:,0],MatrixPar[:,1],s=0.75)
     ax2.set_title('Samples')
-    plt.show()
+    fig.savefig("AGPR_iterations.jpg", dpi=120,bbox_inches='tight')
 
 
 if __name__ == '__main__':

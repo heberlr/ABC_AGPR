@@ -5,7 +5,7 @@ The folders ```./Hybrid``` and ```./Verhulst``` contain scripts (```hybrid.py```
 - "samples_parameters" - samples of parameters used for training
 - "difference_std" - difference between max(std) and mean(std) of elements in parametric hypercube.
 
-In case of the hybrid model, the script ```hybrid.py``` needs to be executed in parallel using more than one task. The number of tasks must be equal to the number of replicates + 1 of the hybrid model. For example, if you want to define 10 replicates to run the hybrid model, you can define 11 tasks (``` mpiexec -n 11 py hybrid.py ```).
+In case of the hybrid model, the script ```hybrid.py``` needs to be executed in parallel using more than one task. The number of tasks must be equal to the number of replicates + 1 of the hybrid model. For example, if you want to define 46 replicates to run the hybrid model, you can define 47 tasks (``` mpiexec -n 47 python hybrid.py ```).
 
 To visualize the results you can use the ```plot.py``` scripts.
 
