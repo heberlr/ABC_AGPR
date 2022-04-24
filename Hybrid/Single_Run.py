@@ -6,7 +6,7 @@ import subprocess
 from scipy.stats import multivariate_normal
 import os
 
-from plot import Get_MAP
+from plot import Get_MAP,ReadParameters
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
@@ -16,6 +16,7 @@ def Replicas(Model, theta, FILE='OutModel.dat'):
   Npar = theta.shape[0] # Number of parameters
   Nqoi = 66 # Number of quantity of interest
   if rank == 0:
+    print(f"Running Model... alpha_P = {theta[0]} alpha_D = {theta[1]} in {size} tasks")
     # Send and Receive data (MPI)
     QOI = np.zeros((size-1, Nqoi))
     for rankID in range(1,size):
@@ -57,7 +58,7 @@ def Calling_modelOpenMP(parameter):
     return QOI
 
 if __name__ == '__main__':
-    Replicas(Calling_modelOpenMP,Get_MAP("Calibration/CalibMCMC.dat"),"Output_SingleRun/OutModel_ABC_MCMC.dat")
-    Replicas(Calling_modelOpenMP,Get_MAP("Calibration/CalibMCMC_AGPR.dat"),"Output_SingleRun/OutModel_ABC_MCMC_AGPR.dat")
-    Replicas(Calling_modelOpenMP,Get_MAP("Calibration/CalibSMC.dat"),"Output_SingleRun/OutModel_ABC_SMC.dat")
-    Replicas(Calling_modelOpenMP,Get_MAP("Calibration/CalibSMC_AGPR.dat"),"Output_SingleRun/OutModel_ABC_SMC_AGPR.dat")
+    Replicas(Calling_modelOpenMP,Get_MAP(ReadParameters("Calibration/CalibMCMC.dat")),"Output_SingleRun/OutModel_ABC_MCMC.dat")
+    Replicas(Calling_modelOpenMP,Get_MAP(ReadParameters("Calibration/CalibMCMC_AGPR.dat")),"Output_SingleRun/OutModel_ABC_MCMC_AGPR.dat")
+    Replicas(Calling_modelOpenMP,Get_MAP(ReadParameters("Calibration/CalibSMC.dat")),"Output_SingleRun/OutModel_ABC_SMC.dat")
+    Replicas(Calling_modelOpenMP,Get_MAP(ReadParameters("Calibration/CalibSMC_AGPR.dat")),"Output_SingleRun/OutModel_ABC_SMC_AGPR.dat")
