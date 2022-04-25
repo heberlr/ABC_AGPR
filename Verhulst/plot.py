@@ -166,9 +166,11 @@ def PlotAGPR_Convergence():
     fig, (ax1,ax2) = plt.subplots(1, 2, figsize=(12,4))
     iteration = np.arange(0,DiffSTD.shape[0],1)
     ax1.plot(iteration,DiffSTD, marker='.', color='r', markersize=5)
-    ax1.set_title('Difference between max(std) and mean(std)')
-    ax2.scatter(MatrixPar[:,0],MatrixPar[:,1],s=0.75)
-    ax2.set_title('Samples')
+    ax1.set_xlabel('iteration number')
+    ax1.set_ylabel(r'$d_{\sigma}$')
+    ax2.scatter(MatrixPar[:,0],MatrixPar[:,1],s=2.0)
+    ax2.set_xlabel(r'$r$')
+    ax2.set_ylabel(r'$\kappa$')
     fig.savefig("AGPR_iterations.jpg", dpi=120,bbox_inches='tight')
 
 
