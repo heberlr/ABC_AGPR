@@ -71,24 +71,16 @@ def AssPosMesh(Mesh):
   return np.array((ElemPos))
 
 def ElemSampling(Ind, ParMesh, PosNode):
-  n = ParMesh.shape[1] # Number of parameters
-  k = PosNode.shape[1] # Number of neighbours nodes
-  M = np.zeros(n)
-  d = 0
-  for i in range(1,k):
-    a = ParMesh[PosNode[Ind,0],:]
-    b = ParMesh[PosNode[Ind,i],:]
-    c = b-a
-    Count = 0
-    for l in range(0,n):
-      if (c[l] != 0):
-        Count = Count +1
-    if (Count == 1):
-      M[d] = ParMesh[PosNode[Ind,0],d] + np.amax(c)*np.random.uniform(0,1)
-      d = d+1
-  return M
+  N_i = ParMesh[PosNode[Ind,0],:] # lower node which generate the element
+  N_f = ParMesh[PosNode[Ind,-1],:] # upper node which generate the element
+  Delta = N_f-N_i # vector of differences
+  return N_i + Delta*np.random.uniform(0,1)
 
-def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, max_iterations=10000, tol=10**-3, NSampCov=40):
+def PrintMeshValues(folder, iteration, ParMesh, PosNode, GPstd, StdElem):
+    with open(folder+'/MeshValues_%04d.pkl'%iteration,'wb') as f:
+        pickle.dump({'Mesh':ParMesh, 'Elements':PosNode, 'GPstdNodes': GPstd, 'StdElements': StdElem},f)
+
+def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, max_iterations=10000, tol=10**-3, NSampCov=40, DataMesh=False):
   Npar = UpperLimit.shape[0]
   if rank == 0:
       samples = lhsmdu.sample(Npar,NpartionsLHD) # Latin Hypercube Sampling of Npar variables, and NpartionsLHD samples each.
@@ -150,6 +142,7 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
         for j in range(0, 2**Npar):
           StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]
         StdElem[i] = (1/(2**Npar))*StdElem[i]
+      if (DataMesh): PrintMeshValues(folder,0,ParMesh,PosNode,GPstd,StdElem)
 
       #Calculating difference between StdMax amd StdMean
       MeanStd = np.mean(StdElem)
@@ -159,7 +152,6 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
       print("Initial step...")
       # Main loop
       for k in range(0,max_iterations):
-        StdMax = np.amax(StdElem)
         Ind = np.argmax(StdElem)
         value = ElemSampling(Ind,ParMesh,PosNode)
         # Send and Receive data (MPI)
@@ -188,6 +180,7 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
           for j in range(0, 2**Npar):
             StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]
           StdElem[i] = (1/(2**Npar))*StdElem[i]
+        if (DataMesh): PrintMeshValues(folder,k+1,ParMesh,PosNode,GPstd,StdElem)
 
         #Calculating difference between StdMax amd StdMean
         MeanStd = np.mean(StdElem)
