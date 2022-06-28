@@ -11,13 +11,13 @@ from GPR import GPR
 
 def GenerateData():
   # Fixed seed - parameters: growth rate = 0.05 and carrying capacity = 10000.0
-  np.random.seed(1234)
+  rng = np.random.RandomState(1234)
   Par = np.array([0.05,10000.0])
   t = np.linspace(24,288,12) #1-12 days
   OutputModel = np.zeros(t.size)
   InitialCond = 1000.0
-  std = InitialCond*0.1
-  OutputModel = (InitialCond*Par[1]*np.exp(Par[0]*t))/(InitialCond*(np.exp(Par[0]*t)-1) + Par[1]) + np.random.normal(0, std, t.size)
+  std = InitialCond*0.2
+  OutputModel = (InitialCond*Par[1]*np.exp(Par[0]*t))/(InitialCond*(np.exp(Par[0]*t)-1) + Par[1]) + rng.normal(0, std, t.size)
   return OutputModel
 
 def Model(Par):
@@ -37,6 +37,7 @@ def ModelAGPR(Par):
 if __name__ == '__main__':
   # Observational data
   Data = GenerateData()
+
   # Boundary of parameter space (prior distribution always uniform)
   UpperLimit = np.array([0.1,1.5e4])
   LowLimit = np.array([0.0,0.5e4])
@@ -51,8 +52,8 @@ if __name__ == '__main__':
   outMCMC = ABC_MCMC(Model, Data, LowLimit, UpperLimit,'Calibration/CalibMCMC.dat',epsilon[-1], NumAccept)
 
   #Training the Gaussian Process Regression (uncomment to train the GPR)
-  NpartionsLHD = 40 # Number of partitions of the Latin hypercube design
-  AdapGP(Model,NpartionsLHD, LowLimit, UpperLimit, NumQOI = Data.size, folder='AGPR', tol = 1e-3)
+  NpartionsLHD = 10 # Number of partitions of the Latin hypercube design
+  AdapGP(Model,NpartionsLHD, LowLimit, UpperLimit, NumQOI = Data.size, folder='AGPR', tol = 1e-3, DataMesh=True)
 
   # Calling the method SMC-AGPR
   outSMC = ABC_SMC(ModelAGPR, Data, LowLimit, UpperLimit,'Calibration/CalibSMC_AGPR.dat',epsilon, NumAccept)
