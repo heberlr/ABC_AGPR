@@ -1,6 +1,7 @@
-#! /usr/bin/env python3
-#
-def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100, NumAccept = 100, max_iterations=100000, var_trasition=0.2):
+import numpy as np
+from scipy.stats import multivariate_normal
+
+def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100, NumAccept = 100, max_iterations=100000, var_trasition=0.2, SeedRandomState = 1234, burnin=0.1):
   #*****************************************************************************
   #
   ## Markov chain Monte Carlo without likelihoods - Bayesian inference
@@ -27,22 +28,23 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100,
   #    string FILE: output file name.
   #
   #    real tol: tolerance between observational and model data.
-  #    
+  #
   #    int NumAccept: the number of accepted parameters that it will generate a posterior distribution.
   #
   #    int max_iterations: the number max of execution of model.
-  #     
+  #
   #    real var_trasition: variance of the normal distribution for sampling.
-  
-  import numpy as np
+  #
+  #    int SeedRandomState: seed for reproducibility purposes.
 
-  file = open(FILE,"w") 
+  rng = np.random.RandomState(SeedRandomState) # random number generator
+  file = open(FILE,"w")
   count = 0
   Npar = UpperLimit.shape[0]
   theta_star = np.zeros(Npar)
   theta = np.zeros((NumAccept,Npar))
   for j in range(0, Npar):
-    theta_star[j] = np.random.uniform(LowLimit[j],UpperLimit[j])
+    theta_star[j] = rng.uniform(LowLimit[j],UpperLimit[j])
   for i in range(0, max_iterations):
     output_model = Model(theta_star)
     distance = np.sqrt(np.sum([(a - b)**2 for a, b in zip(output_model, data)]))
@@ -57,14 +59,14 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', tol = 100,
         break
     cond = True
     while(cond):
-      noise = np.random.normal(0, var_trasition*(UpperLimit-LowLimit))
+      noise = rng.normal(0, var_trasition*(UpperLimit-LowLimit))
       theta_star = theta[count-1,:] + noise
       cond = [False for k in range(0,Npar) if theta_star[k]>UpperLimit[k] or theta_star[k]<LowLimit[k]]
   file.close()
   return theta
 
 
-def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,99,100]), NumAccept = 100, max_iterations=100000, var_trasition=0.2):
+def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,99,100]), NumAccept = 100, max_iterations=100000, var_trasition=0.2, SeedRandomState = 1234):
   #*****************************************************************************
   #
   ## Approximate  Bayesian Computation - Sequential Monte Carlo - Bayesian inference
@@ -91,17 +93,17 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
   #    string FILE: output file name.
   #
   #    array real tol: tolerance vector to evaluate the distance between observational and model data (must be in ascending order). The size of this vector is the number of populations.
-  #    
+  #
   #    int NumAccept: the number of accepted parameters that it will generate a posterior distribution (for each population).
   #
   #    int max_iterations: the number max of execution of model for each population.
-  #     
+  #
   #    real var_trasition: variance of the normal distribution for sampling.
+  #
+  #    int SeedRandomState: seed for reproducibility purposes.
   
-  import numpy as np
-  from scipy.stats import multivariate_normal
-  
-  file = open(FILE,"w") 
+  rng = np.random.RandomState(SeedRandomState) # random number generator
+  file = open(FILE,"w")
   Npar = UpperLimit.shape[0]
   Npop = tol.shape[0]
   theta_star = np.zeros(Npar)
@@ -121,10 +123,10 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
         while(cond):
             if (k == 0):
               for j in range(0, Npar):
-                theta_star[j] = np.random.uniform(LowLimit[j],UpperLimit[j])
+                theta_star[j] = rng.uniform(LowLimit[j],UpperLimit[j])
             else:
-              index = np.random.choice(NumAccept,p=weight_prev)
-              theta_star = theta_ant[index,:] + np.random.normal(0, var_trasition*(UpperLimit-LowLimit))
+              index = rng.choice(NumAccept,p=weight_prev)
+              theta_star = theta_ant[index,:] + rng.normal(0, var_trasition*(UpperLimit-LowLimit))
             cond = [False for k in range(0,Npar) if theta_star[k]>UpperLimit[k] or theta_star[k]<LowLimit[k]]
         output_model = Model(theta_star)
         distance = np.sqrt(np.sum([(a - b)**2 for a, b in zip(output_model, data)]))
@@ -144,7 +146,7 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
             count_pop = count_pop + 1
         if (count_pop == NumAccept):
             break
-    # Normalize weights 
+    # Normalize weights
     weight /= np.sum(weight)
     weight[np.isnan(weight)] = 0.0
     weight[-1] += np.abs(1.0-np.sum(weight))
@@ -154,6 +156,6 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', tol = ([98,9
   for i in range(0, NumAccept):
     for j in range(0, Npar):
       file.write(str(theta_ant[i,j])+" ")
-    file.write(str(count[i,0])+" "+str(count[i,1])+" "+str(dist[i])+"\n")  
+    file.write(str(count[i,0])+" "+str(count[i,1])+" "+str(dist[i])+"\n")
   file.close()
   return theta_ant
