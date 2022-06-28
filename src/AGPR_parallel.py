@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel
 import pickle
-import lhsmdu
+from scipy.stats import qmc
 
 from mpi4py import MPI
 
@@ -70,22 +70,19 @@ def AssPosMesh(Mesh):
     ElemPosX.clear()
   return np.array((ElemPos))
 
-def ElemSampling(Ind, ParMesh, PosNode):
+def ElemSampling(Ind, ParMesh, PosNode, rng):
   N_i = ParMesh[PosNode[Ind,0],:] # lower node which generate the element
   N_f = ParMesh[PosNode[Ind,-1],:] # upper node which generate the element
   Delta = N_f-N_i # vector of differences
-  return N_i + Delta*np.random.uniform(0,1)
+  return N_i + (Delta*rng.uniform(0,1,size=Delta.shape[0]))
 
-def PrintMeshValues(folder, iteration, ParMesh, PosNode, GPstd, StdElem):
-    with open(folder+'/MeshValues_%04d.pkl'%iteration,'wb') as f:
-        pickle.dump({'Mesh':ParMesh, 'Elements':PosNode, 'GPstdNodes': GPstd, 'StdElements': StdElem},f)
-
-def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, max_iterations=10000, tol=10**-3, NSampCov=40, DataMesh=False):
+def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, max_iterations=10000, tol=10**-3, NSampCov=40, DataMesh=False, SeedRandomState = 1234):
+  rng = np.random.RandomState(SeedRandomState) # random number generator
   Npar = UpperLimit.shape[0]
   if rank == 0:
-      samples = lhsmdu.sample(Npar,NpartionsLHD) # Latin Hypercube Sampling of Npar variables, and NpartionsLHD samples each.
+      lhs = qmc.LatinHypercube(d=Npar,seed=rng)
+      samples = lhs.random(n=NpartionsLHD) # Latin Hypercube Sampling of Npar variables, and NpartionsLHD
       vertices = CreateVert(Npar) # Vertices of the hypercube
-      samples = np.array(samples).T
 
       #Concatenate samples and nodes of parametric hypercube
       samples = np.concatenate((samples, vertices), axis=0)
@@ -96,6 +93,7 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
 
       ParMesh = CreateMesh(NpartionsLHD+1,x_0,x_f) # Parametric space unity
       PosNode = AssPosMesh(ParMesh) # Reference of the nodes associate to elemets
+      dict_MeshValues = {}
 
       #Transform unit hypercube in real values
       for j in range(0, Npar):
@@ -142,7 +140,10 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
         for j in range(0, 2**Npar):
           StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]
         StdElem[i] = (1/(2**Npar))*StdElem[i]
-      if (DataMesh): PrintMeshValues(folder,0,ParMesh,PosNode,GPstd,StdElem)
+      if (DataMesh):
+        dict_MeshValues['Mesh'] = ParMesh
+        dict_MeshValues['Nodes_Element'] = PosNode
+        dict_MeshValues[0] = {'GPstdNodes': GPstd.copy(), 'StdElements': StdElem.copy()}
 
       #Calculating difference between StdMax amd StdMean
       MeanStd = np.mean(StdElem)
@@ -153,7 +154,7 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
       # Main loop
       for k in range(0,max_iterations):
         Ind = np.argmax(StdElem)
-        value = ElemSampling(Ind,ParMesh,PosNode)
+        value = ElemSampling(Ind,ParMesh,PosNode,rng)
         # Send and Receive data (MPI)
         for indx in range(0,NumRep):
             rankID = indx%(size-1) + 1
@@ -180,7 +181,8 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
           for j in range(0, 2**Npar):
             StdElem[i] =  GPstd[PosNode[i,j]] + StdElem[i]
           StdElem[i] = (1/(2**Npar))*StdElem[i]
-        if (DataMesh): PrintMeshValues(folder,k+1,ParMesh,PosNode,GPstd,StdElem)
+        if (DataMesh):
+            dict_MeshValues[k+1] = {'GPstdNodes': GPstd.copy(), 'StdElements': StdElem.copy()}
 
         #Calculating difference between StdMax amd StdMean
         MeanStd = np.mean(StdElem)
@@ -205,6 +207,9 @@ def AdapGP(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 1
       # SAVE dictionary GPR, samples, difference
       with open(folder+'/Dictionary.pkl','wb') as f:
           pickle.dump({"GPR":gpr, "samples_parameters":samples, "difference_std": MaxStdDiffMean},f)
+      if (DataMesh):
+          with open(folder+'/MeshValues.pkl','wb') as f:
+              pickle.dump(dict_MeshValues,f)
   else:
       Par = np.zeros(Npar+1, dtype='d')
       while (Par[-1]==0.0):
