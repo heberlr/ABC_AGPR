@@ -14,7 +14,6 @@ Required packages:  (versions used)
 
 * NumPy (version: 1.20.3)
 * scikit-learn (version: 1.0.2)
-* lhsmdu (version: 1.1)
 * pickle (version: 4.0)
 * seaborn (version: 0.10.0)
 * matplotlib (version: 3.2.0)

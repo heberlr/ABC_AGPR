@@ -37,7 +37,7 @@ def PlotPosterior(file, color): # plot histograms with fitting of the density cu
     if (i==0): ax[0].set_xlabel(r'$\bar{\alpha}_{P}$',fontsize=18)
     if (i==1): ax[1].set_xlabel(r'$\bar{\alpha}_{D}$',fontsize=18)
   ax[0].set(ylim = (0,0.13),xticks=(np.linspace(0,0.5,3)))
-  ax[1].set(ylabel=None,ylim = (0,0.12), xticks=(np.linspace(0.1,0.25,4)))
+  ax[1].set(ylabel=None,ylim = (0,0.12), xlim=(0.1,0.27), xticks=(np.linspace(0.1,0.25,4)))
   plt.subplots_adjust(left=0.13,right=0.95,bottom=0.15,top=0.67,wspace=0.38)
   FileOut = file.split("/")[-1].split(".")[0]+".jpg"
   fig.savefig(FileOut, dpi=120,bbox_inches='tight')
@@ -50,9 +50,11 @@ def PlotAGPR_Convergence():
     fig, (ax1,ax2) = plt.subplots(1, 2, figsize=(12,4))
     iteration = np.arange(0,DiffSTD.shape[0],1)
     ax1.plot(iteration,DiffSTD, marker='.', color='r', markersize=5)
-    ax1.set_title('Difference between max(std) and mean(std)')
-    ax2.scatter(MatrixPar[:,0],MatrixPar[:,1],s=0.75)
-    ax2.set_title('Samples')
+    ax1.set_xlabel('iteration number')
+    ax1.set_ylabel(r'$d_{\sigma}$')
+    ax2.scatter(MatrixPar[:,0],MatrixPar[:,1],s=2.0)
+    ax2.set_xlabel(r'$\bar{\alpha}_{P}$')
+    ax2.set_ylabel(r'$\bar{\alpha}_{D}$')
     fig.savefig("AGPR_iterations.jpg", dpi=120,bbox_inches='tight')
 
 def Plot_boxplot(): # plotting quartiles of methods

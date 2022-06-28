@@ -9,7 +9,7 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol = np.array([98,99,100]), NumAccept = 100, max_iterations=100000, var_trasition=0.2):
+def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol = np.array([98,99,100]), NumAccept = 100, max_iterations=100000, var_trasition=0.2, SeedRandomState = 1234):
   #*****************************************************************************
   #
   ## Approximate  Bayesian Computation - Sequential Monte Carlo - Bayesian inference
@@ -44,7 +44,10 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol
   #    int max_iterations: the number max of execution of model for each population.
   #
   #    real var_trasition: variance of the normal distribution for sampling.
+  #
+  #    int SeedRandomState: seed for reproducibility purposes.
 
+  rng = np.random.RandomState(SeedRandomState) # random number generator
   Npar = UpperLimit.shape[0] # Number of parameters
   Nqoi = data.shape[0] # Number of quantity of interest
   if rank == 0:
@@ -67,10 +70,10 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol
             while(cond):
                 if (k == 0):
                   for j in range(0, Npar):
-                    theta_star[j] = np.random.uniform(LowLimit[j],UpperLimit[j])
+                    theta_star[j] = rng.uniform(LowLimit[j],UpperLimit[j])
                 else:
-                  index = np.random.choice(NumAccept,p=weight_prev)
-                  theta_star = theta_ant[index,:] + np.random.normal(0, var_trasition*(UpperLimit-LowLimit))
+                  index = rng.choice(NumAccept,p=weight_prev)
+                  theta_star = theta_ant[index,:] + rng.normal(0, var_trasition*(UpperLimit-LowLimit))
                 cond = [False for k in range(0,Npar) if theta_star[k]>UpperLimit[k] or theta_star[k]<LowLimit[k]]
             # Send and Receive data (MPI)
             QOI = np.zeros((Nrep, Nqoi))
@@ -124,7 +127,7 @@ def ABC_SMC(Model, data, LowLimit, UpperLimit, FILE='CalibSMC.dat', Nrep=10, tol
 
 
 
-def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10, tol = 100, NumAccept = 100, max_iterations=100000, var_trasition=0.2):
+def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10, tol = 100, NumAccept = 100, max_iterations=100000, var_trasition=0.2, SeedRandomState = 1234):
   #*****************************************************************************
   #
   ## Markov chain Monte Carlo without likelihoods - Bayesian inference
@@ -159,7 +162,10 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10,
   #    int max_iterations: the number max of execution of model.
   #
   #    real var_trasition: variance of the normal distribution for sampling.
+  #
+  #    int SeedRandomState: seed for reproducibility purposes.
 
+  rng = np.random.RandomState(SeedRandomState) # random number generator
   Npar = UpperLimit.shape[0] # Number of parameters
   Nqoi = data.shape[0] # Number of quantity of interest
   if rank == 0:
@@ -169,7 +175,7 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10,
       theta_star = np.zeros(Npar)
       theta = np.zeros((NumAccept,Npar))
       for j in range(0, Npar):
-        theta_star[j] = np.random.uniform(LowLimit[j],UpperLimit[j])
+        theta_star[j] = rng.uniform(LowLimit[j],UpperLimit[j])
       for i in range(0, max_iterations):
         # Send and Receive data (MPI)
         QOI = np.zeros((Nrep, Nqoi))
@@ -193,7 +199,7 @@ def ABC_MCMC(Model, data, LowLimit, UpperLimit, FILE='CalibMCMC.dat', Nrep = 10,
             break
         cond = True
         while(cond):
-          noise = np.random.normal(0, var_trasition*(UpperLimit-LowLimit))
+          noise = rng.normal(0, var_trasition*(UpperLimit-LowLimit))
           theta_star = theta[count-1,:] + noise
           cond = [False for k in range(0,Npar) if theta_star[k]>UpperLimit[k] or theta_star[k]<LowLimit[k]]
       file.close()
