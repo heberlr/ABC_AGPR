@@ -48,16 +48,15 @@ def AssPosMesh(Mesh):
     ElemPosX.clear()
   return np.array((ElemPos))
 
-def ElemSampling(Npar, LowLimit, UpperLimit):
-  sample = np.zeros(Npar, dtype='d')
-  for j in range(0, Npar):
-    sample[j] = LowLimit[j] + np.random.uniform(0,1)*(UpperLimit[j]-LowLimit[j])
-  return sample
+def ElemSampling(LowLimit, UpperLimit, rng):
+  Delta = UpperLimit-LowLimit
+  return LowLimit + (Delta*rng.uniform(0,1,size=Delta.shape[0]))
 
-def GPR(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, max_samples=1000):
+def GPR(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, max_samples=1000, SeedRandomState = 1234):
+    rng = np.random.RandomState(SeedRandomState) # random number generator
     Npar = UpperLimit.shape[0]
     if rank == 0:
-        samples = np.random.uniform(0,1,NpartionsLHD*Npar)
+        samples = rng.uniform(0,1,NpartionsLHD*Npar)
         samples = np.reshape(samples, (NpartionsLHD,Npar))
         #Mesh for the parametric space
         x_0 = np.zeros(Npar)
@@ -119,7 +118,7 @@ def GPR(Model, NpartionsLHD, LowLimit, UpperLimit, NumQOI, folder, NumRep = 10, 
         for k in range(NpartionsLHD,max_samples):
             StdMax = np.amax(StdElem)
             Ind = np.argmax(StdElem)
-            value = ElemSampling(Npar, LowLimit, UpperLimit)
+            value = ElemSampling(LowLimit, UpperLimit, rng)
             # Send and Receive data (MPI)
             for rankID in range(0,NumRep):
                 rankID = indx%(size-1) + 1
