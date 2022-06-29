@@ -54,7 +54,7 @@ def SamplesByIteraction(iteration):
 def PlotMesh(iteration,Show=False):
       Par1p,Par2p,sigma_element = ConvertMesh_matplotlib(iteration)
       fig, ax = plt.subplots(1, 1)
-      pcm = ax.pcolormesh(Par1p, Par2p, sigma_element, vmin=sigma_element.min(), vmax=sigma_element.max(), cmap='binary') # RdBu_r
+      pcm = ax.pcolormesh(Par1p, Par2p, sigma_element, vmin=0, vmax=0.6, cmap='binary') # RdBu_r
       fig.colorbar(pcm, ax=ax,label=r'$\sigma_e$')
       Samples = SamplesByIteraction(iteration)
       if (iteration == 0):
