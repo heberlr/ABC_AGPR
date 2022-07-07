@@ -22,8 +22,7 @@ qoi_RBF, qoi_RBF_std = np.loadtxt("sqrexp_qoi.txt"), np.loadtxt("sqrexp_qoi_std.
 qoi_Matern_15, qoi_Matern_15_std = np.loadtxt("Matern_qoi.txt"), np.loadtxt("Matern_qoi_std.txt") 
 qoi_Dot, qoi_Dot_std = np.loadtxt("Dot_qoi.txt"), np.loadtxt("Dot_qoi_std.txt") 
 qoi_Per, qoi_Per_std = np.loadtxt("Expsinsquared_qoi.txt"), np.loadtxt("Expsinsquared_qoi_std.txt")
-t = np.linspace(0,288,13)
-t = t[1:]
+t = data[:, 0]
 
 
 plt.figure(1)
