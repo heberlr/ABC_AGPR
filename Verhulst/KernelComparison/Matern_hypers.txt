@@ -1,0 +1,1 @@
+0.705**2 * Matern(length_scale=[0.011, 1e+03], nu=1.5)
